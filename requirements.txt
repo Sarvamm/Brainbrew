@@ -1,0 +1,7 @@
+streamlit
+streamlit-extras
+plotly
+langchain_groq
+langchain
+langchian_community
+pydantic
