@@ -1,39 +1,63 @@
-import streamlit as st
 import time
+import streamlit as st
+
 
 def streamer(text: str, speed: float = 0.01):
     for char in text:
         time.sleep(speed)
         yield char
 
+
 subheader = """
-Tired of endless note-taking? Lit-Notes leverages the power of AI, built within a Streamlit application, to transform your study lists into a dynamic learning experience.
-We've harnessed the capabilities of Large Language Models (LLMs) within a Python environment.
+Tired of endless note-taking? **Brainbrew** leverages modern AI to transform your study lists into a dynamic learning experience.
 
 **Here's how it works:**
 
-1.  **Enter Your Topics:** Simply type or paste your list of subjects or concepts.
-
-2.  **Python-Powered Generation:** Lit-Notes uses Python to interface with the LLMs, processing your input and generating:
-
-    *   **Detailed Notes:** Comprehensive summaries created by the LLM.
-    *   **Q&A Pairs:** Intelligent questions and answers generated for knowledge testing.
-    *   **Custom Quizzes:** Generate quizzes to reinforce your learning - all driven by Python logic.
-
-Get your Groq API key [here](https://console.groq.com/home)
-
+1. **Enter Your Topics:** Type or paste your list of subjects or concepts below.
+2. **AI Generation:** Brainbrew processes your input to generate:
+   * **Detailed Notes:** Comprehensive summaries with math formula support.
+   * **Q&A Pairs:** Smart questions and step-by-step explanations.
+   * **Custom Quizzes:** Interactive multiple-choice tests with scoring analytics.
 """
+
+st.title("🧠 BrainBrew ")
 
 if st.session_state.first_time:
     st.write_stream(streamer(subheader, speed=0.001))
     st.session_state.first_time = False
 else:
-    st.write(subheader)
-    
-with st.form("form"):
-        st.session_state.groq_api_key = st.text_input("Enter Groq API key here")
-        st.session_state.user_input = st.text_area("Start by entering comma separated list of topics here")
-        st.form_submit_button("Submit")
-        
+    st.markdown(subheader)
+
+st.divider()
+
+with st.form("topics_form"):
+    user_topics = st.text_area(
+        "Enter comma-separated topics here:",
+        value=st.session_state.user_input,
+        placeholder="e.g., Quantum Mechanics, Matrix Multiplication, Special Relativity",
+        height=120,
+    )
+    submitted = st.form_submit_button("Submit Topics")
+    if submitted:
+        st.session_state.user_input = user_topics.strip()
+        # Reset cached content when topics change
+        st.session_state.notes = None
+        st.session_state.messages = []
+        st.session_state.quiz_questions = None
+        st.session_state.quiz_completed = False
+        st.session_state.current_question_idx = 0
+        st.session_state.score = 0
+        st.session_state.attempted_questions = set()
+
 if st.session_state.user_input and st.session_state.groq_api_key:
-    st.write_stream(streamer("Great! now head over to the sidebar and start generating!", speed=0.01))
+    st.success("Topics saved!")
+    st.write_stream(
+        streamer(
+            "Head over to the sidebar tabs (Notes, Q&A, or Quiz) to start generating!",
+            speed=0.01,
+        )
+    )
+elif not st.session_state.groq_api_key:
+    st.warning(
+        "Please configure your Groq API key in `.streamlit/secrets.toml` under `API`."
+    )
